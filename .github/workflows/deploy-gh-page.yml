@@ -1,0 +1,33 @@
+name: CD
+on:
+  pull_request:
+    branches:
+      - "release/**"
+  push:
+    branches:
+      - "main"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Cache modules
+        uses: actions/cache@v1
+        id: yarn-cache
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: ${{ runner.os }}-yarn-
+      - name: Install Dependencies
+        run: yarn install
+      - name: Build website
+        run: npm run build
+        env:
+          CI: false
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          GITHUB_TOKEN: ${{ secrets.CD_GITHUB_TOKEN }}
+          publish_dir: ./build
